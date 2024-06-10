@@ -1,0 +1,98 @@
+package com.br.BackendRPWPFlix.controller;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.br.BackendRPWPFlix.exception.ResourceNotFoundException;
+import com.br.BackendRPWPFlix.model.Filme;
+import com.br.BackendRPWPFlix.repository.FilmeRepository;
+
+@CrossOrigin(origins="http://localhost:4200") //porta angular
+@RestController
+@RequestMapping("/cfilme")
+public class FilmeController {
+
+    @Autowired
+    private FilmeRepository filmeRepository;
+
+    // Método responsável por disponibilizar o método HTTP GET - http://localhost:8080/cfilme/filme/
+    @GetMapping("/filme/")
+    public List<Filme> listar() {
+    	
+        // Cria o objeto para ordenação descendente a partir do id.
+        Sort sortBy = Sort.by(Sort.Direction.DESC, "id");
+        return this.filmeRepository.findAll(sortBy);
+    }
+ //Disponibiliza o método GET no endereço --> http://localhost:8080/cfilme/filme/{id}
+  	@GetMapping("/filme/{id}")
+  	public ResponseEntity<Filme> consultar(@PathVariable Long id){
+  		
+  		Filme filme = this.filmeRepository.findById(id)
+  				.orElseThrow(() -> new ResourceNotFoundException("Filme não encontrado: " + id));	
+  		
+  		return ResponseEntity.ok(filme);
+  		
+  	}	
+  	
+  	//Disponibiliza o método DELETE no endereço --> http://localhost:8080/cfilme/filme/{id}
+  	@DeleteMapping("/filme/{id}")
+  	public ResponseEntity<Map<String, Boolean>> excluir(@PathVariable Long id){
+  		
+  		Filme filme = this.filmeRepository.findById(id)
+  				.orElseThrow(() -> new ResourceNotFoundException("Filme não encontrado: " + id));	
+  		
+  		this.filmeRepository.delete(filme);
+  		
+  		Map<String, Boolean> retorno = new HashMap<>();
+  		retorno.put("Filme excluído com sucesso: ", Boolean.TRUE);
+  		
+  		return ResponseEntity.ok(retorno);
+  		
+  	}
+  	
+  	
+  	//Resposável por inserir novos registros de filmes - POST --> http://localhost:8080/cfilme/filme
+  	@PostMapping("/filme")
+  	public Filme inserir(@RequestBody Filme filme) {
+  		
+  		return this.filmeRepository.save(filme);
+  		
+  	}
+  	
+
+  	//Disponibiliza o método PUT no endereço --> http://localhost:8080/cfilme/filme/{id}
+  	@PutMapping("/filme/{id}")
+  	public ResponseEntity<Filme> alterar(@PathVariable Long id, @RequestBody Filme filme){
+  		
+  		Filme filmeConsult = this.filmeRepository.findById(id)
+  				.orElseThrow(() -> new ResourceNotFoundException("Filme não encontrado: " + id));	
+  		
+
+  		filmeConsult.setId(filme.getId());
+  		filmeConsult.setAnolancamento(filme.getAnolancamento());
+  		filmeConsult.setDiretor(filme.getDiretor());
+  		filmeConsult.setDuracao(filme.getDuracao());
+  		filmeConsult.setGenero(filme.getGenero());
+  		filmeConsult.setTitulo(filme.getTitulo());
+  		
+  		Filme filmeAtualizado = this.filmeRepository.save(filmeConsult); 
+  		
+  		return ResponseEntity.ok(filmeAtualizado);
+  		
+  	}
+  	
+}
